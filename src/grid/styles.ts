@@ -1,6 +1,10 @@
-import {StyleSheet} from 'react-native';
+import {Dimensions, StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
+    grid: {
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').width
+    },
     row: {
         flexDirection: 'row'
     },
