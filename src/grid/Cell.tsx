@@ -9,10 +9,6 @@ interface Props {
 }
 
 const Cell: FunctionComponent<Props> = ({value, location}) => {
-    useEffect(() => {
-        console.log('cell:', location, value);
-    }, [location]);
-
     return (
         <Animated.View style={{
             ...styles.cell,

@@ -1,14 +1,28 @@
-import React, {FunctionComponent} from 'react';
+import React, {FunctionComponent, useEffect} from 'react';
 import {Props} from './props';
-import {View} from 'react-native';
+import {Animated, View} from 'react-native';
 import styles from './styles';
 import Cell from './Cell';
 import {TileData} from './TileData';
+import {TILE_SIZE} from '../App';
 
 const Grid: FunctionComponent<Props> = ({state}) => {
 
+    useEffect(() => {
+        state.forEach((row, i) => {
+            row.forEach((e, j) => {
+                if (e) {
+                    Animated.timing(e.location, {
+                        toValue: {x: TILE_SIZE * j, y: TILE_SIZE * i},
+                        duration: 250,
+                        useNativeDriver: true
+                    }).start();
+                }
+            });
+        });
+    }, [state]);
+
     const renderCells = (field: Array<Array<TileData | null>>): Array<JSX.Element> => {
-        console.log('rendering cells');
         const cells: Array<JSX.Element> = [];
 
         for (let i = 0; i < field.length; i++) {

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Animated, SafeAreaView, StatusBar, StyleSheet} from 'react-native';
+import {SafeAreaView, StatusBar, StyleSheet} from 'react-native';
 import Grid from './grid';
 import GestureHandler, {Direction} from './GestureHandler';
 import {TileData} from './grid/TileData';
@@ -15,149 +15,140 @@ const App = () => {
         [null, null, null, null]
     ]);
 
-    const debugLog = () => {
+    useEffect(() => {
+        if (!gameStarted) {
+            spawnRandomTile(field, 2);
+            setGameStarted(true);
+        }
+    }, []);
+
+    const debugLog = (field: Array<Array<TileData | null>>) => {
         for (let row = 0; row < field.length; row++) {
             let rowString = '';
             for (let cell = 0; cell < field[row].length; cell++) {
                 rowString += field[row][cell]?.value ?? 0;
+                rowString += '\t';
             }
             console.log(rowString);
         }
+        console.log('');
     };
 
-    useEffect(() => {
-        debugLog();
-    }, [field]);
+    const updateAllTiles = (axis: 'horizontal' | 'vertical', start: number, end: number): boolean => {
+        console.log('axis', axis);
+        console.log('start', start);
+        console.log('end', end);
+        if (start === end) {
+            return false;
+        }
 
-    const move = (direction: Direction) => {
         const updatedField = field;
         let changesMade = 0;
 
+        const horizontalMovement = axis === 'horizontal';
+
+        const rowStart = !horizontalMovement ? start : 0;
+        const rowEnd = !horizontalMovement ? end : field.length - 1;
+
+        const cellStart = horizontalMovement ? start : 0;
+        const cellEnd = horizontalMovement ? end : field.length - 1;
+
+        const inverse = start > end;
+        console.log('inverse', inverse);
+
+        for (
+            let rowIndex = rowStart;
+            rowEnd > rowStart ? rowIndex <= rowEnd : rowIndex >= rowEnd;
+            rowEnd > rowStart ? rowIndex++ : rowIndex--
+        ) {
+
+            for (
+                let cellIndex = cellStart;
+                cellEnd > cellStart ? cellIndex <= cellEnd : cellIndex >= cellEnd;
+                cellEnd > cellStart ? cellIndex++ : cellIndex--
+            ) {
+
+                if (!updatedField[rowIndex][cellIndex]) {
+                    continue;
+                }
+
+                console.log('tile');
+
+                let currentIndex = horizontalMovement ? cellIndex : rowIndex;
+                const currentCell = updatedField[rowIndex][cellIndex];
+                console.log('currentIndex',currentIndex);
+
+                let merged = false;
+                let moveAmount = 0;
+                while ((inverse ? currentIndex > end : currentIndex < end) || !merged) {
+                    const nextIndex = inverse ? currentIndex + 1 : currentIndex - 1;
+                    const rowIndexToCheck = horizontalMovement ? rowIndex : nextIndex;
+                    const cellIndexToCheck = horizontalMovement ? nextIndex : cellIndex;
+
+                    console.log('nextIndex', nextIndex);
+
+                    if (inverse ? nextIndex > start : nextIndex < start) {
+                        console.log('nextIndex is outside of bounds, moving to next tile');
+                        break;
+                    }
+
+                    if (updatedField[rowIndexToCheck][cellIndexToCheck] !== null && updatedField[rowIndexToCheck][cellIndexToCheck]?.value === currentCell?.value) {
+                        console.log('self tile value:', currentCell?.value);
+                        console.log('other tile value:', updatedField[rowIndexToCheck][cellIndexToCheck]?.value);
+                        updatedField[rowIndexToCheck][cellIndexToCheck] = null;
+                        merged = true;
+                    }
+                    if (updatedField[rowIndexToCheck][cellIndexToCheck] === null) {
+                        console.log('free spot, increasing moveAmount');
+                        inverse ? moveAmount++ : moveAmount--;
+                        inverse ? currentIndex++ : currentIndex--;
+                        changesMade++;
+                    }
+                    else {
+                        console.log('no free spot, moving on to next tile');
+                        break;
+                    }
+                }
+                if (moveAmount !== 0) {
+                    if (merged) {
+                        currentCell?.doubleValue();
+                    }
+                    updatedField[horizontalMovement ? rowIndex : rowIndex + moveAmount][horizontalMovement ? cellIndex + moveAmount : cellIndex] = currentCell;
+                    updatedField[rowIndex][cellIndex] = null;
+                    console.log(`${rowIndex + 1}, ${cellIndex + 1} -> ${(horizontalMovement ? rowIndex : rowIndex + moveAmount) + 1} , ${(horizontalMovement ? cellIndex + moveAmount : cellIndex) + 1} ${merged ? '(merged)' : ''}`);
+                    debugLog(updatedField);
+                }
+            }
+        }
+
+        setField([...updatedField]);
+
+        return changesMade > 0;
+    };
+
+    const move = (direction: Direction) => {
+        const updatedField = field;
+
+        let changed = false;
+
+        console.log('direction', direction);
+
         switch (direction) {
             case Direction.LEFT:
-                for (let i = 0; i < updatedField.length; i++) {
-                    const row = updatedField[i];
-
-                    for (let j = 1; j < row.length; j++) {
-                        if (!row[j]) {
-                            continue;
-                        }
-
-                        let currentIndex = j;
-                        let merged = false;
-                        let moveAmount = 0;
-                        while (currentIndex > 0 && !merged) {
-                            if (row[currentIndex - 1] === null || (row[currentIndex - 1]?.value && row[j]?.value && row[currentIndex - 1]?.value === row[j]?.value)) {
-                                if (row[currentIndex - 1] !== null) {
-                                    row[j]?.doubleValue();
-                                    merged = true;
-                                }
-                                moveAmount++;
-                                changesMade++;
-                            }
-                            currentIndex--;
-                        }
-                        if (moveAmount > 0) {
-                            row[j - moveAmount] = row[j];
-                            row[j] = null;
-                        }
-                    }
-                }
+                changed = updateAllTiles('horizontal', 0, field.length - 1);
                 break;
             case Direction.RIGHT:
-                for (let i = 0; i < updatedField.length; i++) {
-                    const row = updatedField[i];
-
-                    for (let j = row.length - 2; j >= 0; j--) {
-                        if (!row[j]) {
-                            continue;
-                        }
-
-                        let currentIndex = j;
-                        let merged = false;
-                        let moveAmount = 0;
-                        while (currentIndex < row.length - 1 && !merged) {
-                            if (row[currentIndex + 1] === null || (row[currentIndex + 1]?.value && row[j]?.value && row[currentIndex + 1]?.value === row[j]?.value)) {
-                                if (row[currentIndex + 1] !== null) {
-                                    row[j]?.doubleValue();
-                                    merged = true;
-                                }
-                                moveAmount++;
-                                changesMade++;
-                            }
-                            currentIndex++;
-                        }
-                        if (moveAmount > 0) {
-                            row[j + moveAmount] = row[j];
-                            row[j] = null;
-                        }
-                    }
-                }
-                break;
-            case Direction.DOWN:
-                for (let i = updatedField.length - 2; i >= 0; i--) {
-                    const row = updatedField[i];
-
-                    for (let j = 0; j < row.length; j++) {
-                        if (!row[j]) {
-                            continue;
-                        }
-
-                        let merged = false;
-                        let currentIndex = i;
-                        let moveAmount = 0;
-                        while (currentIndex < updatedField.length - 1 && !merged) {
-                            if (!updatedField[currentIndex + 1][j] || (updatedField[currentIndex + 1][j]?.value && updatedField[i][j]?.value && updatedField[currentIndex + 1][j]?.value === updatedField[i][j]?.value)) {
-                                if (updatedField[currentIndex + 1][j] !== null) {
-                                    updatedField[i][j]?.doubleValue();
-                                    merged = true;
-                                }
-                                moveAmount++;
-                                changesMade++;
-                            }
-                            currentIndex++;
-                        }
-                        if (moveAmount > 0) {
-                            updatedField[i + moveAmount][j] = updatedField[i][j];
-                            updatedField[i][j] = null;
-                        }
-                    }
-                }
+                changed = updateAllTiles('horizontal', field.length - 1, 0);
                 break;
             case Direction.UP:
-                for (let i = 1; i < updatedField.length; i++) {
-                    const row = updatedField[i];
-
-                    for (let j = 0; j < row.length; j++) {
-                        if (!row[j]) {
-                            continue;
-                        }
-
-                        let merged = false;
-                        let currentIndex = i;
-                        let moveAmount = 0;
-                        while (currentIndex > 0 && !merged) {
-                            if (!updatedField[currentIndex - 1][j] || (updatedField[currentIndex - 1][j]?.value && updatedField[i][j]?.value && updatedField[currentIndex - 1][j]?.value === updatedField[i][j]?.value)) {
-                                if (updatedField[currentIndex - 1][j] !== null) {
-                                    updatedField[i][j]?.doubleValue();
-                                    merged = true;
-                                }
-                                moveAmount++;
-                                changesMade++;
-                            }
-                            currentIndex--;
-                        }
-                        if (moveAmount > 0) {
-                            updatedField[i - moveAmount][j] = updatedField[i][j];
-                            updatedField[i][j] = null;
-                        }
-                    }
-                }
+                changed = updateAllTiles('vertical', 0, field.length - 1);
+                break;
+            case Direction.DOWN:
+                changed = updateAllTiles('vertical', field.length - 1, 0);
                 break;
         }
 
-        if (changesMade > 0) {
-            setField([...updatedField]);
+        if (changed) {
             setTimeout(() => {
                 spawnRandomTile(updatedField, 1);
             }, 250);
@@ -167,8 +158,8 @@ const App = () => {
     const attemptToFillTile = (currentField: Array<Array<TileData | null>>): Array<Array<TileData | null>> => {
         const updatedField = currentField;
 
-        const row = Math.floor(Math.random() * 100) % 3;
-        const cell = Math.floor(Math.random() * 100) % 3;
+        const row = Math.floor(Math.random() * 100) % 4;
+        const cell = Math.floor(Math.random() * 100) % 4;
 
         if (!updatedField[row][cell]) {
             updatedField[row][cell] = new TileData();
@@ -179,22 +170,17 @@ const App = () => {
         }
     };
 
-    useEffect(() => {
-        field.forEach((row, i) => {
-            row.forEach((e, j) => {
-                if (e) {
-                    Animated.timing(e.location, {
-                        toValue: { x: TILE_SIZE * j, y: TILE_SIZE * i},
-                        duration: 250,
-                        useNativeDriver: true
-                    }).start();
-                }
-            });
-        });
-    }, [field]);
-
     const spawnRandomTile = (currentField: Array<Array<TileData | null>>, amount: number) => {
         let updatedField = currentField;
+
+        const filledTileCount = currentField.reduce((acc, cur) => {
+            return acc + cur.reduce((acc, cur) => acc + (cur !== null ? 1 : 0), 0);
+        }, 0);
+
+        if (filledTileCount >= 16) {
+            console.log('No more empty tiles');
+            return;
+        }
 
         for (let i = 0; i < amount; i++) {
             updatedField = attemptToFillTile(updatedField);
@@ -202,13 +188,6 @@ const App = () => {
 
         setField([...updatedField]);
     };
-
-    useEffect(() => {
-        if (!gameStarted) {
-            spawnRandomTile(field, 2);
-            setGameStarted(true);
-        }
-    }, []);
 
     return (
         <>
