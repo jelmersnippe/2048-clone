@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, StatusBar, StyleSheet} from 'react-native';
+import {SafeAreaView, StatusBar, StyleSheet, TouchableOpacity, Text} from 'react-native';
 import Grid from './grid';
 import GestureHandler, {Direction} from './GestureHandler';
 import {CellData} from './grid/Cell/CellData';
@@ -31,7 +31,7 @@ const App = () => {
             spawnRandomCell(field, 2);
             setGameStarted(true);
         }
-    }, [gameStarted]);
+    }, []);
 
     const debugLog = (fieldToOutput: Array<Array<CellData | null>>) => {
         for (let row = 0; row < fieldToOutput.length; row++) {
@@ -46,9 +46,6 @@ const App = () => {
     };
 
     const updateAllCells = (axis: 'horizontal' | 'vertical', start: number, end: number): boolean => {
-        console.log('axis', axis);
-        console.log('start', start);
-        console.log('end', end);
         if (start === end) {
             return false;
         }
@@ -65,7 +62,6 @@ const App = () => {
         const cellEnd = horizontalMovement ? end : field.length - 1;
 
         const inverse = start > end;
-        console.log('inverse', inverse);
 
         for (
             let rowIndex = rowStart;
@@ -83,11 +79,8 @@ const App = () => {
                     continue;
                 }
 
-                console.log('cell');
-
                 let currentIndex = horizontalMovement ? cellIndex : rowIndex;
                 const currentCell = updatedField[rowIndex][cellIndex];
-                console.log('currentIndex',currentIndex);
 
                 let merged = false;
                 let moveAmount = 0;
@@ -96,27 +89,20 @@ const App = () => {
                     const rowIndexToCheck = horizontalMovement ? rowIndex : nextIndex;
                     const cellIndexToCheck = horizontalMovement ? nextIndex : cellIndex;
 
-                    console.log('nextIndex', nextIndex);
-
                     if (inverse ? nextIndex > start : nextIndex < start) {
-                        console.log('nextIndex is outside of bounds, moving to next cell');
                         break;
                     }
 
                     if (updatedField[rowIndexToCheck][cellIndexToCheck] !== null && updatedField[rowIndexToCheck][cellIndexToCheck]?.value === currentCell?.value) {
-                        console.log('self cell value:', currentCell?.value);
-                        console.log('other cell value:', updatedField[rowIndexToCheck][cellIndexToCheck]?.value);
                         updatedField[rowIndexToCheck][cellIndexToCheck] = null;
                         merged = true;
                     }
                     if (updatedField[rowIndexToCheck][cellIndexToCheck] === null) {
-                        console.log('free spot, increasing moveAmount');
                         inverse ? moveAmount++ : moveAmount--;
                         inverse ? currentIndex++ : currentIndex--;
                         changesMade++;
                     }
                     else {
-                        console.log('no free spot, moving on to next cell');
                         break;
                     }
                 }
@@ -126,7 +112,6 @@ const App = () => {
                     }
                     updatedField[horizontalMovement ? rowIndex : rowIndex + moveAmount][horizontalMovement ? cellIndex + moveAmount : cellIndex] = currentCell;
                     updatedField[rowIndex][cellIndex] = null;
-                    console.log(`${rowIndex + 1}, ${cellIndex + 1} -> ${(horizontalMovement ? rowIndex : rowIndex + moveAmount) + 1} , ${(horizontalMovement ? cellIndex + moveAmount : cellIndex) + 1} ${merged ? '(merged)' : ''}`);
                     debugLog(updatedField);
                 }
             }
@@ -138,11 +123,13 @@ const App = () => {
     };
 
     const move = (direction: Direction) => {
+        if (!gameStarted) {
+            return;
+        }
+
         const updatedField = field;
 
         let changed = false;
-
-        console.log('direction', direction);
 
         switch (direction) {
             case Direction.LEFT:
@@ -168,8 +155,6 @@ const App = () => {
                 spawnRandomCell(updatedField, 1);
             }, 250);
         } else if (filledCellCount >= 16) {
-            console.log('No more empty cells');
-            setField(emptyField());
             setGameStarted(false);
         }
     };
@@ -202,8 +187,17 @@ const App = () => {
     return (
         <>
             <StatusBar barStyle={'dark-content'}/>
-            <SafeAreaView style={{flex: 1}}>
-                <GestureHandler move={(direction: Direction) => move(direction)} containerStyle={styles.mainContainer}>
+            <SafeAreaView style={{...styles.mainContainer, flex: 1}}>
+                <TouchableOpacity
+                    style={styles.replayButton}
+                    onPress={() => {
+                        spawnRandomCell(emptyField(), 2);
+                        setGameStarted(true);
+                    }}
+                >
+                    <Text style={styles.replayButtonText}>Replay</Text>
+                </TouchableOpacity>
+                <GestureHandler field={field} move={(direction: Direction) => move(direction)} containerStyle={styles.mainContainer}>
                     <Grid state={field}/>
                 </GestureHandler>
             </SafeAreaView>
@@ -215,7 +209,6 @@ export default App;
 
 const styles = StyleSheet.create({
     mainContainer: {
-        flex: 1,
         alignItems: 'center',
         justifyContent: 'center'
     },
@@ -234,5 +227,13 @@ const styles = StyleSheet.create({
         margin: 8,
         color: '#000',
         textAlign: 'center'
+    },
+    replayButton: {
+        borderWidth: 1,
+        marginBottom: 40
+    },
+    replayButtonText: {
+        fontSize: 24,
+        textTransform: 'capitalize'
     }
 });
