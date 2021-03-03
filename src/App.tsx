@@ -2,13 +2,12 @@ import React, {useEffect, useState} from 'react';
 import {SafeAreaView, StatusBar, StyleSheet} from 'react-native';
 import Grid from './grid';
 import GestureHandler, {Direction} from './GestureHandler';
-import {TileData} from './grid/TileData';
-
-export const TILE_SIZE = 50;
+import {CellData} from './grid/Cell/CellData';
+import {theme} from './theme';
 
 const App = () => {
     const [gameStarted, setGameStarted] = useState(false);
-    const [field, setField] = useState<Array<Array<TileData | null>>>([
+    const [field, setField] = useState<Array<Array<CellData | null>>>([
         [null, null, null, null],
         [null, null, null, null],
         [null, null, null, null],
@@ -17,12 +16,12 @@ const App = () => {
 
     useEffect(() => {
         if (!gameStarted) {
-            spawnRandomTile(field, 2);
+            spawnRandomCell(field, 2);
             setGameStarted(true);
         }
     }, []);
 
-    const debugLog = (field: Array<Array<TileData | null>>) => {
+    const debugLog = (field: Array<Array<CellData | null>>) => {
         for (let row = 0; row < field.length; row++) {
             let rowString = '';
             for (let cell = 0; cell < field[row].length; cell++) {
@@ -34,7 +33,7 @@ const App = () => {
         console.log('');
     };
 
-    const updateAllTiles = (axis: 'horizontal' | 'vertical', start: number, end: number): boolean => {
+    const updateAllCells = (axis: 'horizontal' | 'vertical', start: number, end: number): boolean => {
         console.log('axis', axis);
         console.log('start', start);
         console.log('end', end);
@@ -72,7 +71,7 @@ const App = () => {
                     continue;
                 }
 
-                console.log('tile');
+                console.log('cell');
 
                 let currentIndex = horizontalMovement ? cellIndex : rowIndex;
                 const currentCell = updatedField[rowIndex][cellIndex];
@@ -88,13 +87,13 @@ const App = () => {
                     console.log('nextIndex', nextIndex);
 
                     if (inverse ? nextIndex > start : nextIndex < start) {
-                        console.log('nextIndex is outside of bounds, moving to next tile');
+                        console.log('nextIndex is outside of bounds, moving to next cell');
                         break;
                     }
 
                     if (updatedField[rowIndexToCheck][cellIndexToCheck] !== null && updatedField[rowIndexToCheck][cellIndexToCheck]?.value === currentCell?.value) {
-                        console.log('self tile value:', currentCell?.value);
-                        console.log('other tile value:', updatedField[rowIndexToCheck][cellIndexToCheck]?.value);
+                        console.log('self cell value:', currentCell?.value);
+                        console.log('other cell value:', updatedField[rowIndexToCheck][cellIndexToCheck]?.value);
                         updatedField[rowIndexToCheck][cellIndexToCheck] = null;
                         merged = true;
                     }
@@ -105,7 +104,7 @@ const App = () => {
                         changesMade++;
                     }
                     else {
-                        console.log('no free spot, moving on to next tile');
+                        console.log('no free spot, moving on to next cell');
                         break;
                     }
                 }
@@ -135,55 +134,55 @@ const App = () => {
 
         switch (direction) {
             case Direction.LEFT:
-                changed = updateAllTiles('horizontal', 0, field.length - 1);
+                changed = updateAllCells('horizontal', 0, field.length - 1);
                 break;
             case Direction.RIGHT:
-                changed = updateAllTiles('horizontal', field.length - 1, 0);
+                changed = updateAllCells('horizontal', field.length - 1, 0);
                 break;
             case Direction.UP:
-                changed = updateAllTiles('vertical', 0, field.length - 1);
+                changed = updateAllCells('vertical', 0, field.length - 1);
                 break;
             case Direction.DOWN:
-                changed = updateAllTiles('vertical', field.length - 1, 0);
+                changed = updateAllCells('vertical', field.length - 1, 0);
                 break;
         }
 
         if (changed) {
             setTimeout(() => {
-                spawnRandomTile(updatedField, 1);
+                spawnRandomCell(updatedField, 1);
             }, 250);
         }
     };
 
-    const attemptToFillTile = (currentField: Array<Array<TileData | null>>): Array<Array<TileData | null>> => {
+    const attemptToFillCell = (currentField: Array<Array<CellData | null>>): Array<Array<CellData | null>> => {
         const updatedField = currentField;
 
         const row = Math.floor(Math.random() * 100) % 4;
         const cell = Math.floor(Math.random() * 100) % 4;
 
         if (!updatedField[row][cell]) {
-            updatedField[row][cell] = new TileData();
-            updatedField[row][cell]?.location.setValue({x: cell * TILE_SIZE, y: row * TILE_SIZE});
+            updatedField[row][cell] = new CellData();
+            updatedField[row][cell]?.location.setValue({x: cell * theme.CELL_SIZE, y: row * theme.CELL_SIZE});
             return updatedField;
         } else {
-            return attemptToFillTile(updatedField);
+            return attemptToFillCell(updatedField);
         }
     };
 
-    const spawnRandomTile = (currentField: Array<Array<TileData | null>>, amount: number) => {
+    const spawnRandomCell = (currentField: Array<Array<CellData | null>>, amount: number) => {
         let updatedField = currentField;
 
-        const filledTileCount = currentField.reduce((acc, cur) => {
+        const filledCellCount = currentField.reduce((acc, cur) => {
             return acc + cur.reduce((acc, cur) => acc + (cur !== null ? 1 : 0), 0);
         }, 0);
 
-        if (filledTileCount >= 16) {
-            console.log('No more empty tiles');
+        if (filledCellCount >= 16) {
+            console.log('No more empty cells');
             return;
         }
 
         for (let i = 0; i < amount; i++) {
-            updatedField = attemptToFillTile(updatedField);
+            updatedField = attemptToFillCell(updatedField);
         }
 
         setField([...updatedField]);

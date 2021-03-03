@@ -1,26 +1,22 @@
-import {Dimensions, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
+import {theme} from '../theme';
 
 const styles = StyleSheet.create({
     grid: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').width
+        width: theme.GRID_SIZE,
+        height: theme.GRID_SIZE
     },
     row: {
         flexDirection: 'row'
     },
     cell: {
-        width: 50,
-        height: 50,
+        width: theme.CELL_SIZE,
+        height: theme.CELL_SIZE,
         borderWidth: 2,
         borderColor: 'brown',
-        backgroundColor: '#999',
+        backgroundColor: 'lightgrey',
         alignItems: 'center',
         justifyContent: 'center'
-    },
-    cellText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 20
     }
 });
 

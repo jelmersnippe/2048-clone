@@ -3,18 +3,18 @@ import {Props} from './props';
 import {Animated, View} from 'react-native';
 import styles from './styles';
 import Cell from './Cell';
-import {TileData} from './TileData';
-import {TILE_SIZE} from '../App';
+import {CellData} from './Cell/CellData';
+import {theme} from '../theme';
 
 const Grid: FunctionComponent<Props> = ({state}) => {
 
     useEffect(() => {
-        state.forEach((row, i) => {
-            row.forEach((e, j) => {
-                if (e) {
-                    Animated.timing(e.location, {
-                        toValue: {x: TILE_SIZE * j, y: TILE_SIZE * i},
-                        duration: 250,
+        state.forEach((row, rowIndex) => {
+            row.forEach((cell, cellIndex) => {
+                if (cell) {
+                    Animated.timing(cell.location, {
+                        toValue: {x: theme.CELL_SIZE * cellIndex, y: theme.CELL_SIZE * rowIndex},
+                        duration: 150,
                         useNativeDriver: true
                     }).start();
                 }
@@ -22,14 +22,14 @@ const Grid: FunctionComponent<Props> = ({state}) => {
         });
     }, [state]);
 
-    const renderCells = (field: Array<Array<TileData | null>>): Array<JSX.Element> => {
+    const renderCells = (field: Array<Array<CellData | null>>): Array<JSX.Element> => {
         const cells: Array<JSX.Element> = [];
 
-        for (let i = 0; i < field.length; i++) {
-            for (let j = 0; j < field[i].length; j++) {
-                const cell = field[i][j];
+        for (let rowIndex = 0; rowIndex < field.length; rowIndex++) {
+            for (let cellIndex = 0; cellIndex < field[rowIndex].length; cellIndex++) {
+                const cell = field[rowIndex][cellIndex];
                 if (cell) {
-                    cells.push(<Cell value={cell.value} location={cell.location} key={`${i}-${j}`}/>);
+                    cells.push(<Cell value={cell.value} location={cell.location} key={`${rowIndex}-${cellIndex}`}/>);
                 }
             }
         }
@@ -44,7 +44,7 @@ const Grid: FunctionComponent<Props> = ({state}) => {
                     <View key={rowIndex} style={styles.row}>
                         {
                             row.map((cell, cellIndex) =>
-                                <View key={rowIndex + '-' + cellIndex} style={{...styles.cell, backgroundColor: 'lightgrey'}}/>
+                                <View key={rowIndex + '-' + cellIndex} style={styles.cell}/>
                             )
                         }
                     </View>

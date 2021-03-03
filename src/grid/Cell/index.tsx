@@ -1,7 +1,6 @@
 import {Animated, Text} from 'react-native';
+import React, {FunctionComponent} from 'react';
 import styles from './styles';
-import React, {FunctionComponent, useEffect} from 'react';
-import {TILE_SIZE} from '../App';
 
 interface Props {
     value: number;
@@ -12,12 +11,6 @@ const Cell: FunctionComponent<Props> = ({value, location}) => {
     return (
         <Animated.View style={{
             ...styles.cell,
-            backgroundColor: 'orange',
-            width: TILE_SIZE,
-            height: TILE_SIZE,
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'absolute',
             transform: [
                 {translateX: location.x},
                 {translateY: location.y}
