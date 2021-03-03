@@ -5,27 +5,39 @@ import GestureHandler, {Direction} from './GestureHandler';
 import {CellData} from './grid/Cell/CellData';
 import {theme} from './theme';
 
+const emptyField = (): Array<Array<CellData | null>> => {
+    const grid: Array<Array<CellData | null>> = [];
+
+    for (let rowIndex = 0; rowIndex < theme.ROW_LENGTH; rowIndex++) {
+        const row: Array<CellData | null> = [];
+
+        for (let cell = 0; cell < theme.ROW_LENGTH; cell++) {
+            row.push(null);
+        }
+
+        grid.push(row);
+    }
+
+    return grid;
+};
+
+
 const App = () => {
     const [gameStarted, setGameStarted] = useState(false);
-    const [field, setField] = useState<Array<Array<CellData | null>>>([
-        [null, null, null, null],
-        [null, null, null, null],
-        [null, null, null, null],
-        [null, null, null, null]
-    ]);
+    const [field, setField] = useState<Array<Array<CellData | null>>>(emptyField());
 
     useEffect(() => {
         if (!gameStarted) {
             spawnRandomCell(field, 2);
             setGameStarted(true);
         }
-    }, []);
+    }, [gameStarted]);
 
-    const debugLog = (field: Array<Array<CellData | null>>) => {
-        for (let row = 0; row < field.length; row++) {
+    const debugLog = (fieldToOutput: Array<Array<CellData | null>>) => {
+        for (let row = 0; row < fieldToOutput.length; row++) {
             let rowString = '';
-            for (let cell = 0; cell < field[row].length; cell++) {
-                rowString += field[row][cell]?.value ?? 0;
+            for (let cell = 0; cell < fieldToOutput[row].length; cell++) {
+                rowString += fieldToOutput[row][cell]?.value ?? 0;
                 rowString += '\t';
             }
             console.log(rowString);
@@ -134,31 +146,39 @@ const App = () => {
 
         switch (direction) {
             case Direction.LEFT:
-                changed = updateAllCells('horizontal', 0, field.length - 1);
+                changed = updateAllCells('horizontal', 0, theme.ROW_LENGTH - 1);
                 break;
             case Direction.RIGHT:
-                changed = updateAllCells('horizontal', field.length - 1, 0);
+                changed = updateAllCells('horizontal', theme.ROW_LENGTH - 1, 0);
                 break;
             case Direction.UP:
-                changed = updateAllCells('vertical', 0, field.length - 1);
+                changed = updateAllCells('vertical', 0, theme.ROW_LENGTH - 1);
                 break;
             case Direction.DOWN:
-                changed = updateAllCells('vertical', field.length - 1, 0);
+                changed = updateAllCells('vertical', theme.ROW_LENGTH - 1, 0);
                 break;
         }
+
+        const filledCellCount = updatedField.reduce((acc, cur) => {
+            return acc + cur.reduce((acc, cur) => acc + (cur !== null ? 1 : 0), 0);
+        }, 0);
 
         if (changed) {
             setTimeout(() => {
                 spawnRandomCell(updatedField, 1);
             }, 250);
+        } else if (filledCellCount >= 16) {
+            console.log('No more empty cells');
+            setField(emptyField());
+            setGameStarted(false);
         }
     };
 
     const attemptToFillCell = (currentField: Array<Array<CellData | null>>): Array<Array<CellData | null>> => {
         const updatedField = currentField;
 
-        const row = Math.floor(Math.random() * 100) % 4;
-        const cell = Math.floor(Math.random() * 100) % 4;
+        const row = Math.floor(Math.random() * 100) % theme.ROW_LENGTH;
+        const cell = Math.floor(Math.random() * 100) % theme.ROW_LENGTH;
 
         if (!updatedField[row][cell]) {
             updatedField[row][cell] = new CellData();
@@ -171,15 +191,6 @@ const App = () => {
 
     const spawnRandomCell = (currentField: Array<Array<CellData | null>>, amount: number) => {
         let updatedField = currentField;
-
-        const filledCellCount = currentField.reduce((acc, cur) => {
-            return acc + cur.reduce((acc, cur) => acc + (cur !== null ? 1 : 0), 0);
-        }, 0);
-
-        if (filledCellCount >= 16) {
-            console.log('No more empty cells');
-            return;
-        }
 
         for (let i = 0; i < amount; i++) {
             updatedField = attemptToFillCell(updatedField);
