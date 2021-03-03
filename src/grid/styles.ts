@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
         height: theme.CELL_SIZE,
         borderWidth: 2,
         borderColor: 'brown',
-        backgroundColor: 'lightgrey',
+        backgroundColor: '#f0efeb',
         alignItems: 'center',
         justifyContent: 'center'
     }

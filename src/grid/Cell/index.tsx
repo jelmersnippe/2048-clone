@@ -1,6 +1,6 @@
 import {Animated, Text} from 'react-native';
 import React, {FunctionComponent} from 'react';
-import styles from './styles';
+import styles, {colors} from './styles';
 
 interface Props {
     value: number;
@@ -11,6 +11,7 @@ const Cell: FunctionComponent<Props> = ({value, location}) => {
     return (
         <Animated.View style={{
             ...styles.cell,
+            backgroundColor: colors[value],
             transform: [
                 {translateX: location.x},
                 {translateY: location.y}

@@ -1,6 +1,20 @@
 import {StyleSheet} from 'react-native';
 import {theme} from '../../theme';
 
+export const colors = {
+    2: '#bc8a5f',
+    4: '#c89f9c',
+    8: '#f07167',
+    16: '#f5cb5c',
+    32: '#ff9f1c',
+    64: '#d08c60',
+    128: '#82c0cc',
+    256: '#03045e',
+    512: '#c77dff',
+    1024: '#7b2cbf',
+    2048: '#55a630'
+};
+
 const styles = StyleSheet.create({
     cell: {
         borderWidth: 2,
@@ -15,7 +29,7 @@ const styles = StyleSheet.create({
     cellText: {
         color: 'white',
         fontWeight: 'bold',
-        fontSize: 20
+        fontSize: theme.CELL_SIZE / 3
     }
 });
 
