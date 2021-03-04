@@ -25,6 +25,7 @@ const emptyField = (): Array<Array<CellData | null>> => {
 const App = () => {
     const [gameStarted, setGameStarted] = useState(false);
     const [field, setField] = useState<Array<Array<CellData | null>>>(emptyField());
+    const [score, setScore] = useState(0);
 
     useEffect(() => {
         if (!gameStarted) {
@@ -32,18 +33,6 @@ const App = () => {
             setGameStarted(true);
         }
     }, []);
-
-    const debugLog = (fieldToOutput: Array<Array<CellData | null>>) => {
-        for (let row = 0; row < fieldToOutput.length; row++) {
-            let rowString = '';
-            for (let cell = 0; cell < fieldToOutput[row].length; cell++) {
-                rowString += fieldToOutput[row][cell]?.value ?? 0;
-                rowString += '\t';
-            }
-            console.log(rowString);
-        }
-        console.log('');
-    };
 
     const updateAllCells = (axis: 'horizontal' | 'vertical', start: number, end: number): boolean => {
         if (start === end) {
@@ -107,12 +96,12 @@ const App = () => {
                     }
                 }
                 if (moveAmount !== 0) {
-                    if (merged) {
-                        currentCell?.doubleValue();
+                    if (merged && currentCell) {
+                        currentCell.doubleValue();
+                        setScore(score + currentCell.value);
                     }
                     updatedField[horizontalMovement ? rowIndex : rowIndex + moveAmount][horizontalMovement ? cellIndex + moveAmount : cellIndex] = currentCell;
                     updatedField[rowIndex][cellIndex] = null;
-                    debugLog(updatedField);
                 }
             }
         }
@@ -188,10 +177,12 @@ const App = () => {
         <>
             <StatusBar barStyle={'dark-content'}/>
             <SafeAreaView style={{...styles.mainContainer, flex: 1}}>
+                <Text>Score: {score}</Text>
                 <TouchableOpacity
                     style={styles.replayButton}
                     onPress={() => {
                         spawnRandomCell(emptyField(), 2);
+                        setScore(0);
                         setGameStarted(true);
                     }}
                 >
