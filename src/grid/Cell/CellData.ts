@@ -7,4 +7,12 @@ export class CellData {
     doubleValue() {
         this.value = this.value * 2;
     }
+
+    setLocation(position: {x: number, y: number}) {
+        this.location.setValue(position);
+    }
+
+    setValue(value: number) {
+        this.value = value;
+    }
 }

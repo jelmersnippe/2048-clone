@@ -4,6 +4,7 @@ import Grid from './grid';
 import GestureHandler, {Direction} from './GestureHandler';
 import {CellData} from './grid/Cell/CellData';
 import {theme} from './theme';
+import {getCurrentField, getCurrentScore, saveCurrentField, saveCurrentScore} from './store';
 
 const emptyField = (): Array<Array<CellData | null>> => {
     const grid: Array<Array<CellData | null>> = [];
@@ -23,16 +24,36 @@ const emptyField = (): Array<Array<CellData | null>> => {
 
 
 const App = () => {
-    const [gameStarted, setGameStarted] = useState(false);
     const [field, setField] = useState<Array<Array<CellData | null>>>(emptyField());
     const [score, setScore] = useState(0);
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
-        if (!gameStarted) {
-            spawnRandomCell(field, 2);
-            setGameStarted(true);
-        }
+        (async () => {
+            const currentField = await getCurrentField();
+            const currentScore = await getCurrentScore();
+            if (currentField && currentScore) {
+                setField([...currentField]);
+                setScore(currentScore);
+                setLoaded(true);
+            } else {
+                spawnRandomCell(field, 2);
+            }
+            setLoaded(true);
+        })();
     }, []);
+
+    useEffect(() => {
+        if (loaded) {
+            saveCurrentScore(score);
+        }
+    }, [score, loaded]);
+
+    useEffect(() => {
+        if (loaded) {
+            saveCurrentField(field);
+        }
+    }, [field, loaded]);
 
     const updateAllCells = (axis: 'horizontal' | 'vertical', start: number, end: number): boolean => {
         if (start === end) {
@@ -112,11 +133,15 @@ const App = () => {
     };
 
     const move = (direction: Direction) => {
-        if (!gameStarted) {
+        const updatedField = field;
+
+        const filledCellCount = updatedField.reduce((acc, cur) => {
+            return acc + cur.reduce((acc, cur) => acc + (cur !== null ? 1 : 0), 0);
+        }, 0);
+
+        if (filledCellCount >= 16) {
             return;
         }
-
-        const updatedField = field;
 
         let changed = false;
 
@@ -135,16 +160,10 @@ const App = () => {
                 break;
         }
 
-        const filledCellCount = updatedField.reduce((acc, cur) => {
-            return acc + cur.reduce((acc, cur) => acc + (cur !== null ? 1 : 0), 0);
-        }, 0);
-
         if (changed) {
             setTimeout(() => {
                 spawnRandomCell(updatedField, 1);
             }, 250);
-        } else if (filledCellCount >= 16) {
-            setGameStarted(false);
         }
     };
 
@@ -183,7 +202,6 @@ const App = () => {
                     onPress={() => {
                         spawnRandomCell(emptyField(), 2);
                         setScore(0);
-                        setGameStarted(true);
                     }}
                 >
                     <Text style={styles.replayButtonText}>Replay</Text>
