@@ -12,7 +12,7 @@ const Cell: FunctionComponent<Props> = ({value, location}) => {
     return (
         <Animated.View style={{
             ...styles.cell,
-            backgroundColor: theme.colors[value] ?? theme.colors['2'],
+            backgroundColor: theme.colors[value.toString()] ?? theme.colors['2'],
             transform: [
                 {translateX: location.x},
                 {translateY: location.y}

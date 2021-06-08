@@ -4,7 +4,7 @@ const ROW_LENGTH = 4;
 const GRID_SIZE = Dimensions.get('window').width - 40;
 const CELL_SIZE = GRID_SIZE / ROW_LENGTH;
 
-const colors = {
+const colors: {[key: string]: string} = {
     2: '#bc8a5f',
     4: '#c89f9c',
     8: '#f07167',
