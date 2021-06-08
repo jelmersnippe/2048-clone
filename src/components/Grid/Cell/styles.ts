@@ -1,30 +1,17 @@
 import {StyleSheet} from 'react-native';
-import {theme} from '../../theme';
-
-export const colors = {
-    2: '#bc8a5f',
-    4: '#c89f9c',
-    8: '#f07167',
-    16: '#f5cb5c',
-    32: '#ff9f1c',
-    64: '#d08c60',
-    128: '#82c0cc',
-    256: '#03045e',
-    512: '#c77dff',
-    1024: '#7b2cbf',
-    2048: '#55a630'
-};
+import {theme} from '../../../config/theme';
 
 const styles = StyleSheet.create({
     cell: {
         borderWidth: 2,
-        borderColor: 'brown',
-        backgroundColor: 'orange',
+        borderColor: theme.colors.brown,
+        backgroundColor: theme.colors['2'],
         width: theme.CELL_SIZE,
         height: theme.CELL_SIZE,
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'absolute'
+        position: 'absolute',
+        borderRadius: 4
     },
     cellText: {
         color: 'white',

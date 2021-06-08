@@ -4,7 +4,7 @@ import {Animated, View} from 'react-native';
 import styles from './styles';
 import Cell from './Cell';
 import {CellData} from './Cell/CellData';
-import {theme} from '../theme';
+import {theme} from '../../config/theme';
 
 const Grid: FunctionComponent<Props> = ({state}) => {
 

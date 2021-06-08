@@ -1,6 +1,6 @@
 import React, {FunctionComponent, useMemo} from 'react';
 import {PanResponder, View, ViewStyle} from 'react-native';
-import {CellData} from './grid/Cell/CellData';
+import {CellData} from './Grid/Cell/CellData';
 
 export enum Direction {
     LEFT = 'LEFT',

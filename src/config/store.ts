@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {CellData} from './grid/Cell/CellData';
+import {CellData} from '../components/Grid/Cell/CellData';
 import {theme} from './theme';
 
 const HIGH_SCORE_KEY = 'HIGH_SCORE';

@@ -1,41 +1,31 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, StatusBar, StyleSheet, TouchableOpacity, Text} from 'react-native';
-import Grid from './grid';
-import GestureHandler, {Direction} from './GestureHandler';
-import {CellData} from './grid/Cell/CellData';
-import {theme} from './theme';
-import {getCurrentField, getCurrentScore, saveCurrentField, saveCurrentScore} from './store';
-
-const emptyField = (): Array<Array<CellData | null>> => {
-    const grid: Array<Array<CellData | null>> = [];
-
-    for (let rowIndex = 0; rowIndex < theme.ROW_LENGTH; rowIndex++) {
-        const row: Array<CellData | null> = [];
-
-        for (let cell = 0; cell < theme.ROW_LENGTH; cell++) {
-            row.push(null);
-        }
-
-        grid.push(row);
-    }
-
-    return grid;
-};
-
+import {SafeAreaView, StatusBar, StyleSheet, View} from 'react-native';
+import Grid from './components/Grid';
+import GestureHandler, {Direction} from './components/GestureHandler';
+import {CellData} from './components/Grid/Cell/CellData';
+import {theme} from './config/theme';
+import {getCurrentField, getCurrentScore, getHighScore, saveCurrentField, saveCurrentScore, saveHighScore} from './config/store';
+import Header from './components/Header';
+import emptyField from './config/emptyField';
 
 const App = () => {
     const [field, setField] = useState<Array<Array<CellData | null>>>(emptyField());
     const [score, setScore] = useState(0);
+    const [highScore, setHighScore] = useState(0);
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         (async () => {
             const currentField = await getCurrentField();
             const currentScore = await getCurrentScore();
+            const currentHighScore = await getHighScore();
+            if (currentHighScore) {
+                setHighScore(currentHighScore);
+            }
+
             if (currentField && currentScore) {
                 setField([...currentField]);
                 setScore(currentScore);
-                setLoaded(true);
             } else {
                 spawnRandomCell(field, 2);
             }
@@ -45,13 +35,25 @@ const App = () => {
 
     useEffect(() => {
         if (loaded) {
-            saveCurrentScore(score);
+            (async () => {
+                await saveCurrentScore(score);
+            })();
         }
     }, [score, loaded]);
 
     useEffect(() => {
         if (loaded) {
-            saveCurrentField(field);
+            (async () => {
+                await saveHighScore(score);
+            })();
+        }
+    }, [highScore, loaded]);
+
+    useEffect(() => {
+        if (loaded) {
+            (async () => {
+                await saveCurrentField(field);
+            })();
         }
     }, [field, loaded]);
 
@@ -111,15 +113,19 @@ const App = () => {
                         inverse ? moveAmount++ : moveAmount--;
                         inverse ? currentIndex++ : currentIndex--;
                         changesMade++;
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
                 if (moveAmount !== 0) {
                     if (merged && currentCell) {
                         currentCell.doubleValue();
-                        setScore(score + currentCell.value);
+                        const newScore = score + currentCell.value;
+                        setScore(newScore);
+
+                        if (newScore > highScore) {
+                            setHighScore(newScore);
+                        }
                     }
                     updatedField[horizontalMovement ? rowIndex : rowIndex + moveAmount][horizontalMovement ? cellIndex + moveAmount : cellIndex] = currentCell;
                     updatedField[rowIndex][cellIndex] = null;
@@ -195,20 +201,25 @@ const App = () => {
     return (
         <>
             <StatusBar barStyle={'dark-content'}/>
-            <SafeAreaView style={{...styles.mainContainer, flex: 1}}>
-                <Text>Score: {score}</Text>
-                <TouchableOpacity
-                    style={styles.replayButton}
-                    onPress={() => {
-                        spawnRandomCell(emptyField(), 2);
-                        setScore(0);
-                    }}
-                >
-                    <Text style={styles.replayButtonText}>Replay</Text>
-                </TouchableOpacity>
-                <GestureHandler field={field} move={(direction: Direction) => move(direction)} containerStyle={styles.mainContainer}>
-                    <Grid state={field}/>
-                </GestureHandler>
+            <SafeAreaView style={styles.mainContainer}>
+                <Header
+                    score={score}
+                    highScore={highScore}
+                    buttons={[
+                        {
+                            icon: 'refresh',
+                            onPress: () => {
+                                spawnRandomCell(emptyField(), 2);
+                                setScore(0);
+                            }
+                        }
+                    ]}
+                />
+                <View style={styles.gridContainer}>
+                    <GestureHandler field={field} move={(direction: Direction) => move(direction)}>
+                        <Grid state={field}/>
+                    </GestureHandler>
+                </View>
             </SafeAreaView>
         </>
     );
@@ -218,31 +229,15 @@ export default App;
 
 const styles = StyleSheet.create({
     mainContainer: {
+        flex: 1,
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        backgroundColor: theme.colors.background
     },
-    box: {
-        height: 100,
-        width: 100,
-        borderRadius: 5,
-        marginVertical: 40,
-        backgroundColor: '#61dafb',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    text: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        margin: 8,
-        color: '#000',
-        textAlign: 'center'
-    },
-    replayButton: {
-        borderWidth: 1,
-        marginBottom: 40
-    },
-    replayButtonText: {
-        fontSize: 24,
-        textTransform: 'capitalize'
+    gridContainer: {
+        borderColor: theme.colors.brown,
+        borderWidth: 2,
+        borderRadius: 8,
+        marginVertical: 40
     }
 });
