@@ -16,10 +16,11 @@ const Header: FunctionComponent<Props> = ({score, highScore, buttons}) => {
                     <ScoreBlock label={'Best'} score={highScore}/>
                 </View>
                 <View style={styles.buttonContainer}>
-                    {buttons?.map((button) => (
+                    {buttons?.map((button, index) => (
                         <TouchableOpacity
                             style={styles.iconButton}
                             onPress={button.onPress}
+                            key={'header_button_' + index}
                         >
                             <Icon
                                 color={theme.colors.lightText}
